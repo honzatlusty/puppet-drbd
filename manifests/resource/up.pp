@@ -13,8 +13,10 @@ define drbd::resource::up (
   # volume already.
   exec { "initialize DRBD metadata for ${name}":
     command => "yes yes | drbdadm create-md ${name}",
-    onlyif  => "test -e ${disk}",
-    unless  => "drbdadm dump-md ${name} || (drbdadm cstate ${name} | egrep -q '^(Sync|Connected|WFConnection|StandAlone|Verify)')",
+    onlyif  => [
+      "test -e ${disk}",
+      "drbdadm dump-md ${name} 2>&1 | grep -q 'No valid meta data found'"
+    ]
     before  => Service['drbd'],
     require => [
       Exec['modprobe drbd'],
